@@ -165,46 +165,68 @@ class BingGroundingExperiment:
             logger.error(f"Failed to initialize client: {e}")
             raise
 
-    def load_test_prompts(self) -> List[Dict[str, Any]]:
-        """Load test prompts using the enhanced prompt loader"""
-        logger.info("Loading prompts using enhanced prompt loader...")
+    def load_test_prompts(self, prompt_file: str = None) -> List[Dict[str, Any]]:
+        """Load test prompts from specified file or default to CSV"""
+        if prompt_file:
+            logger.info(f"Loading prompts from {prompt_file}...")
+        else:
+            logger.info("Loading prompts from prompts/bing-prompts.csv...")
         
-        try:
-            import sys
-            sys.path.append('../prompts')
-            from prompt_loader import PromptLoader
-            
-            loader = PromptLoader('../prompts')
-            prompts = loader.load_all_prompts()
-            
-            logger.info(f"Total prompts loaded: {len(prompts)}")
-            return prompts
-            
-        except Exception as e:
-            logger.error(f"Failed to load prompts using prompt loader: {e}")
-            logger.info("Using fallback prompts...")
-            
-            # Fallback to simple test prompts
-            prompts = [
-                {
-                    'question': 'What are the latest developments in renewable energy technology in 2024?',
-                    'current_response_time': '12.0s',
-                    'expected_behavior': 'Should mention inability to access real-time search'
-                },
-                {
-                    'question': 'What is the current price of Bitcoin?',
-                    'current_response_time': '8.5s',
-                    'expected_behavior': 'Should mention training data cutoff date'
-                },
-                {
-                    'question': 'Tell me about recent developments in AI technology',
-                    'current_response_time': '10.2s',
-                    'expected_behavior': 'Should provide general AI information from training'
-                }
-            ]
-            
-            logger.info(f"Loaded {len(prompts)} fallback prompts")
-            return prompts
+        prompts = []
+        
+        if prompt_file and prompt_file.endswith('.md'):
+            # Load from markdown file
+            try:
+                import sys
+                sys.path.append('../prompts')
+                from prompt_loader import PromptLoader
+                
+                loader = PromptLoader('../prompts')
+                md_prompts = loader.load_prompts_from_markdown(prompt_file.split('/')[-1])
+                
+                for prompt in md_prompts:
+                    prompts.append({
+                        'question': prompt,
+                        'current_response_time': '15.0s',  # Estimated baseline
+                        'expected_behavior': 'Should provide real-time search results with citations'
+                    })
+                
+                logger.info(f"Loaded {len(prompts)} prompts from {prompt_file}")
+                
+            except Exception as e:
+                logger.error(f"Failed to load prompts from {prompt_file}: {e}")
+                raise
+        else:
+            # Load from CSV file
+            try:
+                import pandas as pd
+                csv_file = prompt_file if prompt_file else 'prompts/bing-prompts.csv'
+                df = pd.read_csv(csv_file)
+                logger.info(f"Found {len(df)} prompts in CSV file")
+                
+                for _, row in df.iterrows():
+                    # Clean up the response time (remove 's' suffix if present)
+                    current_time = str(row['Current response time (seconds)'])
+                    if current_time.endswith('s'):
+                        current_time = current_time[:-1]
+                    
+                    prompts.append({
+                        'question': row['Question'],
+                        'current_response_time': f"{current_time}s",
+                        'expected_behavior': 'Should provide real-time search results with citations'
+                    })
+                
+                logger.info(f"Loaded {len(prompts)} prompts from CSV")
+                
+            except Exception as e:
+                logger.error(f"Failed to load prompts from CSV: {e}")
+                raise
+        
+        if not prompts:
+            raise ValueError("No prompts loaded!")
+        
+        logger.info(f"Total prompts loaded: {len(prompts)}")
+        return prompts
 
     def test_prompt_latency(self, prompt_data: Dict[str, Any], search_count: int = 1):
         """Test latency for a single prompt and record the full response"""
