@@ -175,24 +175,21 @@ class BingGroundingExperiment:
         prompts = []
         
         if prompt_file and prompt_file.endswith('.md'):
-            # Load from markdown file
+            # Load markdown file as a single prompt
             try:
-                from prompt_loader import PromptLoader
+                with open(prompt_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
                 
-                loader = PromptLoader('.')
-                md_prompts = loader.load_prompts_from_markdown(prompt_file)
+                prompts.append({
+                    'question': content,
+                    'current_response_time': '30.0s',  # Estimated baseline for long prompt
+                    'expected_behavior': 'Should provide comprehensive real-time search results with citations'
+                })
                 
-                for prompt in md_prompts:
-                    prompts.append({
-                        'question': prompt,
-                        'current_response_time': '15.0s',  # Estimated baseline
-                        'expected_behavior': 'Should provide real-time search results with citations'
-                    })
-                
-                logger.info(f"Loaded {len(prompts)} prompts from {prompt_file}")
+                logger.info(f"Loaded 1 long prompt from {prompt_file} ({len(content)} characters)")
                 
             except Exception as e:
-                logger.error(f"Failed to load prompts from {prompt_file}: {e}")
+                logger.error(f"Failed to load prompt from {prompt_file}: {e}")
                 raise
         else:
             # Load from CSV file
