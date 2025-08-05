@@ -177,12 +177,10 @@ class BingGroundingExperiment:
         if prompt_file and prompt_file.endswith('.md'):
             # Load from markdown file
             try:
-                import sys
-                sys.path.append('../prompts')
                 from prompt_loader import PromptLoader
                 
-                loader = PromptLoader('../prompts')
-                md_prompts = loader.load_prompts_from_markdown(prompt_file.split('/')[-1])
+                loader = PromptLoader('.')
+                md_prompts = loader.load_prompts_from_markdown(prompt_file)
                 
                 for prompt in md_prompts:
                     prompts.append({
@@ -357,12 +355,12 @@ class BingGroundingExperiment:
         
         return results
 
-    def run_experiment(self, search_count: int = 1):
+    def run_experiment(self, prompt_file: str = None, search_count: int = 1):
         """Run the complete experiment"""
         logger.info(f"Starting Bing Grounding Experiment with {search_count} searches per prompt")
         
         # Load test prompts
-        prompts = self.load_test_prompts()
+        prompts = self.load_test_prompts(prompt_file)
         if not prompts:
             logger.error("No prompts loaded")
             return
@@ -440,6 +438,16 @@ class BingGroundingExperiment:
         return df
 
 def main():
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Bing Grounding Experiment')
+    parser.add_argument('--prompt-file', '-p', 
+                       help='Path to prompt file (CSV or MD). Default: prompts/bing-prompts.csv')
+    parser.add_argument('--search-count', '-s', type=int, default=1,
+                       help='Number of searches per prompt (default: 1)')
+    
+    args = parser.parse_args()
+    
     logger.info("Starting Bing Grounding Experiment")
     
     # Load environment variables
@@ -460,8 +468,7 @@ def main():
     
     # Create and run experiment
     experiment = BingGroundingExperiment(endpoint, connection_id)
-    # Run with just 1 prompt for debugging
-    experiment.run_experiment(search_count=1)
+    experiment.run_experiment(prompt_file=args.prompt_file, search_count=args.search_count)
 
 if __name__ == "__main__":
     main() 
