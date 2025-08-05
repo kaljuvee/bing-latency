@@ -24,16 +24,19 @@ bing-latency/
 │   ├── experiment_2_system_prompt_optimization.py # Experiment 2: System prompt optimization
 │   ├── experiment_3_concurrent_optimization.py  # Experiment 3: Concurrent optimization
 │   ├── run_all_experiments.py                  # Master script to run all experiments
-│   ├── bing_latency_experiment.py              # Legacy: Standard Bing Search API experiment
-│   ├── bing_grounding_experiment.py            # Legacy: Azure AI Projects + Bing Grounding Tool
-│   ├── custom_prompts.py                       # Prompts for standard Bing Search API
-│   ├── bing_grounding_prompts.py               # Prompts for Bing Grounding Tool
-│   ├── run_custom_experiment.py                # Run standard experiment with custom prompts
-│   ├── test_setup.py                           # Test standard setup
-│   └── test_bing_grounding_setup.py            # Test Bing Grounding Tool setup
+│   ├── bing_grounding_experiment.py            # Current: Azure AI Agents + Bing Grounding Tool
+│   ├── prompt_loader.py                        # Prompt loading utility
+│   ├── run_custom_experiment.py                # Legacy: Standard Bing Search API
+│   └── test_setup.py                           # Test standard setup
+├── prompts/
+│   ├── bing-prompts.csv                        # Default prompts with historical response times
+│   ├── long_prompt.md                          # Single comprehensive research prompt
+│   └── prompt_loader.py                        # Prompt loading utility
+├── setup/
+│   └── test_end_to_end_setup.py               # Azure AI Agents + Bing Search setup test
 ├── logs/                                       # Experiment results and logs
 ├── requirements.txt                            # Python dependencies
-├── env.example                                 # Environment variables template
+├── .env                                        # Environment variables (create from env.example)
 ├── setup_azure_resources.md                    # Azure setup guide
 └── README.md                                   # This file
 ```
@@ -71,6 +74,13 @@ cp env.example .env
 nano .env
 ```
 
+**Required Environment Variables for Azure AI Agents + Bing Grounding Tool:**
+```bash
+AZURE_AI_PROJECTS_CONNECTION_STRING=https://your-resource.services.ai.azure.com/
+BING_GROUNDING_CONNECTION_ID=/subscriptions/.../connections/your-connection
+BING_SEARCH_API_KEY=your-bing-search-api-key
+```
+
 ### 4. Install Dependencies
 
 ```bash
@@ -102,13 +112,25 @@ python tests/experiment_2_system_prompt_optimization.py
 python tests/experiment_3_concurrent_optimization.py
 ```
 
-**Option C: Legacy Approaches**
+**Option C: Azure AI Agents + Bing Grounding Tool (Current)**
+```bash
+# Run with default CSV prompts (15 prompts with historical response times)
+python tests/bing_grounding_experiment.py
+
+# Run with long prompt file (single comprehensive prompt)
+python tests/bing_grounding_experiment.py --prompt-file prompts/long_prompt.md
+
+# Run with custom CSV file
+python tests/bing_grounding_experiment.py --prompt-file your_custom_prompts.csv
+
+# Run with multiple searches per prompt
+python tests/bing_grounding_experiment.py --search-count 3
+```
+
+**Option D: Legacy Standard Bing Search API**
 ```bash
 # Standard Bing Search API
 python tests/run_custom_experiment.py
-
-# Azure AI Projects + Bing Grounding Tool
-python tests/bing_grounding_experiment.py
 ```
 
 ## Output Files
@@ -130,9 +152,13 @@ After running the experiments, check the `logs/` folder for:
 - **`experiment_*_report_*.csv`**: Processed results for each experiment
 - **`experiment_*_visualization_*.png`**: Performance charts for each experiment
 
-**Legacy Approaches:**
+**Azure AI Agents + Bing Grounding Tool:**
+- **`bing_grounding_experiment.log`**: Main experiment logs
+- **`bing_grounding_results_*.csv`**: Latency summary results
+- **`bing_grounding_responses_*.txt`**: Full response content
+
+**Legacy Standard Bing Search API:**
 - **`experiment.log`**: Standard Bing Search API logs
-- **`bing_grounding_experiment.log`**: Bing Grounding Tool logs
 
 ## Sample Output
 
