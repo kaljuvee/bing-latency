@@ -1,0 +1,8 @@
+azure-ai-projects
+azure-identity
+numpy
+python-dotenv
+pandas
+matplotlib
+seaborn
+requests 
